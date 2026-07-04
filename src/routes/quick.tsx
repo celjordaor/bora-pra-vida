@@ -3,6 +3,7 @@ import { useEffect, useState, type FormEvent } from 'react'
 import { useAuth } from '@/lib/auth-context'
 import { useShoppingList } from '@/hooks/useShoppingList'
 import { useNotes } from '@/hooks/useNotes'
+import { MicButton } from '@/components/ui/MicButton'
 
 export const Route = createFileRoute('/quick')({
   component: QuickCapturePage,
@@ -107,14 +108,20 @@ function QuickNoteCapture() {
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-2">
-      <textarea
-        autoFocus
-        placeholder="Anotar algo rápido…"
-        value={content}
-        onChange={(e) => setContent(e.target.value)}
-        rows={5}
-        className="rounded-lg border border-gray-200 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-navy-600 resize-y"
-      />
+      <div className="flex items-start gap-2 rounded-lg border border-gray-200 px-3 py-2 focus-within:ring-2 focus-within:ring-navy-600">
+        <textarea
+          autoFocus
+          placeholder="Anotar algo rápido…"
+          value={content}
+          onChange={(e) => setContent(e.target.value)}
+          rows={5}
+          className="flex-1 text-sm outline-none resize-y"
+        />
+        <MicButton
+          onResult={(t) => setContent((prev) => (prev ? `${prev} ${t}` : t))}
+          className="mt-1"
+        />
+      </div>
       <button
         type="submit"
         className="self-start bg-navy-600 hover:bg-navy-950 transition-colors text-white text-sm rounded-lg px-4 py-2 font-medium"

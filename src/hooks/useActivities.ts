@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import {
   fetchActivities,
+  createActivity,
   updateActivityStatus,
   generateNextOccurrence,
 } from '@/lib/activities'
@@ -66,5 +67,32 @@ export function useActivities() {
     }
   }
 
-  return { activities, spaces, loading, error, refresh, changeStatus }
+  /** Criação rápida (quick-add), usada pela barra de "digite ou dite" no board. */
+  async function quickCreate(input: {
+    title: string
+    due_date: string | null
+    due_time: string | null
+  }) {
+    try {
+      const created = await createActivity({
+        title: input.title,
+        description: null,
+        space_id: null,
+        priority: 'medium',
+        due_date: input.due_date,
+        due_time: input.due_time,
+        recurrence_rule: null,
+      })
+      setActivities((prev) => [...prev, created])
+      toast.success('Atividade criada.')
+    } catch (err) {
+      if (isOfflineError(err)) {
+        toast.info('Sem conexão — a atividade será criada quando o sinal voltar.')
+        return
+      }
+      toast.error(err instanceof Error ? err.message : 'Erro ao criar atividade')
+    }
+  }
+
+  return { activities, spaces, loading, error, refresh, changeStatus, quickCreate }
 }

@@ -1,5 +1,8 @@
 import { useState, type FormEvent } from 'react'
 import { suggestCategory, CATEGORY_ORDER, CATEGORY_LABELS } from '@/lib/shopping-categories'
+import { parseSpokenItems } from '@/lib/shopping-voice-parser'
+import { MicButton } from '@/components/ui/MicButton'
+import { toast } from '@/lib/toast'
 
 interface Props {
   onAdd: (input: { name: string; quantity: string | null; category: string }) => void
@@ -23,14 +26,34 @@ export function AddItemForm({ onAdd }: Props) {
     setCategory('auto')
   }
 
+  function handleVoiceResult(transcript: string) {
+    const items = parseSpokenItems(transcript)
+    if (items.length === 0) return
+
+    if (items.length === 1) {
+      // um item só: preenche o campo pra você revisar antes de adicionar
+      setName(items[0])
+      return
+    }
+
+    // frase com vários itens ("leite, pão e ovos"): adiciona todos direto
+    for (const itemName of items) {
+      onAdd({ name: itemName, quantity: null, category: suggestCategory(itemName) })
+    }
+    toast.success(`${items.length} itens adicionados por voz.`)
+  }
+
   return (
     <form onSubmit={handleSubmit} className="flex flex-wrap gap-2 mb-4">
-      <input
-        placeholder="Adicionar item… (ex: leite, tomate)"
-        value={name}
-        onChange={(e) => setName(e.target.value)}
-        className="flex-1 min-w-[160px] rounded-lg border border-gray-200 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-navy-600"
-      />
+      <div className="flex-1 min-w-[160px] flex items-center gap-2 rounded-lg border border-gray-200 px-3 py-2 focus-within:ring-2 focus-within:ring-navy-600">
+        <input
+          placeholder="Adicionar item… (ex: leite, tomate)"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          className="flex-1 text-sm outline-none"
+        />
+        <MicButton onResult={handleVoiceResult} />
+      </div>
       <input
         placeholder="Qtd (opcional)"
         value={quantity}

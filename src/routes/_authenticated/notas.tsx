@@ -3,6 +3,7 @@ import { useState, type FormEvent } from 'react'
 import { useNotes } from '@/hooks/useNotes'
 import { NoteCard } from '@/components/notes/NoteCard'
 import { useConfirm } from '@/components/ui/ConfirmDialogProvider'
+import { MicButton } from '@/components/ui/MicButton'
 import type { QuickNote } from '@/types/note'
 
 export const Route = createFileRoute('/_authenticated/notas')({
@@ -42,18 +43,25 @@ function NotesPage() {
     if (ok) convertNote(note)
   }
 
+  function handleVoiceResult(transcript: string) {
+    setContent((prev) => (prev ? `${prev} ${transcript}` : transcript))
+  }
+
   return (
     <div className="max-w-3xl">
       <h2 className="text-xl font-semibold text-navy-950 mb-4">Notas</h2>
 
       <form onSubmit={handleSubmit} className="mb-6 flex flex-col gap-2">
-        <textarea
-          placeholder="Anotar algo rápido…"
-          value={content}
-          onChange={(e) => setContent(e.target.value)}
-          rows={2}
-          className="rounded-lg border border-gray-200 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-navy-600 resize-y min-h-[64px]"
-        />
+        <div className="flex items-start gap-2 rounded-lg border border-gray-200 px-3 py-2 focus-within:ring-2 focus-within:ring-navy-600">
+          <textarea
+            placeholder="Anotar algo rápido…"
+            value={content}
+            onChange={(e) => setContent(e.target.value)}
+            rows={2}
+            className="flex-1 text-sm outline-none resize-y min-h-[64px]"
+          />
+          <MicButton onResult={handleVoiceResult} className="mt-1" />
+        </div>
         <button
           type="submit"
           className="self-start bg-navy-600 hover:bg-navy-950 transition-colors text-white text-sm rounded-lg px-4 py-2 font-medium"
