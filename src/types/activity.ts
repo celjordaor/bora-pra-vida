@@ -37,6 +37,7 @@ export interface Activity {
   due_time: string | null // 'HH:MM:SS'
   recurrence_rule: RecurrenceRule | null
   recurrence_parent_id: string | null
+  from_note: boolean
   completed_at: string | null
   created_at: string
   subtasks?: Subtask[]

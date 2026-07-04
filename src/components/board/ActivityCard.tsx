@@ -32,6 +32,11 @@ export function ActivityCard({ activity, onClick, onStatusChange }: Props) {
             🔁
           </span>
         )}
+        {activity.from_note && (
+          <span title="Criada a partir de uma nota" className="text-xs shrink-0">
+            📝
+          </span>
+        )}
       </div>
 
       {(dateChip || subtasks.length > 0) && (

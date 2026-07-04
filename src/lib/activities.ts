@@ -26,6 +26,8 @@ export interface ActivityInput {
   due_date: string | null
   due_time: string | null
   recurrence_rule: RecurrenceRule | null
+  /** true quando a atividade nasceu da conversão de uma nota rápida */
+  from_note?: boolean
 }
 
 export async function createActivity(input: ActivityInput): Promise<Activity> {

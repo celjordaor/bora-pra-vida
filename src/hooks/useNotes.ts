@@ -46,8 +46,8 @@ export function useNotes() {
   async function convertNote(note: QuickNote) {
     try {
       await convertNoteToActivity(note)
+      setNotes((prev) => prev.filter((n) => n.id !== note.id))
       toast.success('Nota convertida em atividade — confira em "Hoje".')
-      refresh()
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Erro ao converter nota')
     }

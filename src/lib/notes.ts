@@ -33,16 +33,8 @@ export async function deleteNote(id: string) {
   if (error) throw error
 }
 
-async function markNoteConverted(id: string, activityId: string) {
-  const { error } = await supabase
-    .from('quick_notes')
-    .update({ converted_to_activity_id: activityId })
-    .eq('id', id)
-  if (error) throw error
-}
-
 /** Cria uma atividade a partir do conteúdo da nota (título = primeira linha,
- * descrição = texto completo) e marca a nota como convertida. */
+ * descrição = texto completo) e, em seguida, exclui a nota original. */
 export async function convertNoteToActivity(note: QuickNote) {
   const firstLine = note.content.split('\n')[0].trim()
   const title = firstLine.slice(0, 80) || 'Nova atividade'
@@ -55,8 +47,9 @@ export async function convertNoteToActivity(note: QuickNote) {
     due_date: null,
     due_time: null,
     recurrence_rule: null,
+    from_note: true,
   })
 
-  await markNoteConverted(note.id, activity.id)
+  await deleteNote(note.id)
   return activity
 }

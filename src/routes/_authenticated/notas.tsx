@@ -3,6 +3,7 @@ import { useState, type FormEvent } from 'react'
 import { useNotes } from '@/hooks/useNotes'
 import { NoteCard } from '@/components/notes/NoteCard'
 import { useConfirm } from '@/components/ui/ConfirmDialogProvider'
+import type { QuickNote } from '@/types/note'
 
 export const Route = createFileRoute('/_authenticated/notas')({
   component: NotesPage,
@@ -31,6 +32,16 @@ function NotesPage() {
     if (ok) removeNote(id)
   }
 
+  async function handleConvert(note: QuickNote) {
+    const ok = await confirmDialog({
+      title: 'Converter em tarefa',
+      message:
+        'A nota vai virar uma atividade em "Hoje" e a nota original será excluída. Quer continuar?',
+      confirmLabel: 'Converter',
+    })
+    if (ok) convertNote(note)
+  }
+
   return (
     <div className="max-w-3xl">
       <h2 className="text-xl font-semibold text-navy-950 mb-4">Notas</h2>
@@ -41,7 +52,7 @@ function NotesPage() {
           value={content}
           onChange={(e) => setContent(e.target.value)}
           rows={2}
-          className="rounded-lg border border-gray-200 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-navy-600 resize-none"
+          className="rounded-lg border border-gray-200 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-navy-600 resize-y min-h-[64px]"
         />
         <button
           type="submit"
@@ -63,7 +74,7 @@ function NotesPage() {
             <NoteCard
               key={note.id}
               note={note}
-              onConvert={() => convertNote(note)}
+              onConvert={() => handleConvert(note)}
               onDelete={() => handleDelete(note.id)}
             />
           ))}
