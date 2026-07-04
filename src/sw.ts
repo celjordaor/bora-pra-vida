@@ -7,6 +7,7 @@ import {
 import { registerRoute, NavigationRoute } from 'workbox-routing'
 import { NetworkFirst } from 'workbox-strategies'
 import { ExpirationPlugin } from 'workbox-expiration'
+import { CacheableResponsePlugin } from 'workbox-cacheable-response'
 import { Queue } from 'workbox-background-sync'
 
 declare let self: ServiceWorkerGlobalScope
@@ -33,7 +34,13 @@ registerRoute(
   new NetworkFirst({
     cacheName: 'supabase-data',
     networkTimeoutSeconds: 4,
-    plugins: [new ExpirationPlugin({ maxEntries: 200, maxAgeSeconds: 60 * 60 * 24 })],
+    plugins: [
+      // Sem isso, o Workbox cacheia QUALQUER resposta, incluindo erros
+      // (401, 500...) — e depois passaria a servir esse erro como se fosse
+      // um dado válido sempre que a rede demorasse mais que o timeout.
+      new CacheableResponsePlugin({ statuses: [0, 200] }),
+      new ExpirationPlugin({ maxEntries: 200, maxAgeSeconds: 60 * 60 * 24 }),
+    ],
   })
 )
 
