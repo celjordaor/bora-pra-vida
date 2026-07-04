@@ -1,10 +1,10 @@
 import { useCallback, useEffect, useState } from 'react'
 import {
   fetchActivities,
-  fetchSpaces,
   updateActivityStatus,
   generateNextOccurrence,
 } from '@/lib/activities'
+import { fetchSpaces } from '@/lib/spaces'
 import { toast } from '@/lib/toast'
 import type { Activity, ActivityStatus, Space } from '@/types/activity'
 

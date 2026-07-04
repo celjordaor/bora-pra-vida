@@ -13,6 +13,20 @@ export function Sidebar() {
         >
           Hoje
         </Link>
+        <Link
+          to="/compras"
+          activeProps={{ className: 'bg-navy-800' }}
+          className="rounded-lg px-3 py-2 hover:bg-navy-800 transition-colors"
+        >
+          Compras
+        </Link>
+        <Link
+          to="/notas"
+          activeProps={{ className: 'bg-navy-800' }}
+          className="rounded-lg px-3 py-2 hover:bg-navy-800 transition-colors"
+        >
+          Notas
+        </Link>
       </nav>
     </aside>
   )

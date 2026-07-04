@@ -1,6 +1,6 @@
 import { supabase } from './supabase'
 import { computeNextDueDate } from './recurrence'
-import type { Activity, ActivityStatus, RecurrenceRule, Space } from '@/types/activity'
+import type { Activity, ActivityStatus, RecurrenceRule } from '@/types/activity'
 
 export async function fetchActivities(): Promise<Activity[]> {
   const { data, error } = await supabase
@@ -16,16 +16,6 @@ export async function fetchActivities(): Promise<Activity[]> {
       (a: any, b: any) => a.sort_order - b.sort_order
     ),
   }))
-}
-
-export async function fetchSpaces(): Promise<Space[]> {
-  const { data, error } = await supabase
-    .from('spaces')
-    .select('*')
-    .order('sort_order')
-
-  if (error) throw error
-  return data ?? []
 }
 
 export interface ActivityInput {
