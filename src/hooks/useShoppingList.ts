@@ -9,6 +9,7 @@ import {
   type AddItemInput,
 } from '@/lib/shopping'
 import { toast } from '@/lib/toast'
+import { isOfflineError } from '@/lib/offline-sync'
 import type { ShoppingItem, FrequentItem } from '@/types/shopping'
 
 export function useShoppingList() {
@@ -34,6 +35,13 @@ export function useShoppingList() {
     refresh()
   }, [refresh])
 
+  // Quando a conexão volta, recarrega a lista pra buscar o que foi
+  // sincronizado em segundo plano pelo service worker.
+  useEffect(() => {
+    window.addEventListener('bora-pra-vida:sync', refresh)
+    return () => window.removeEventListener('bora-pra-vida:sync', refresh)
+  }, [refresh])
+
   async function addItem(input: AddItemInput) {
     try {
       const result = await addShoppingItem(items, input)
@@ -42,6 +50,26 @@ export function useShoppingList() {
       }
       await refresh()
     } catch (err) {
+      if (isOfflineError(err)) {
+        // A requisição já foi guardada pelo service worker e será
+        // reenviada sozinha quando a conexão voltar — só mostra o item
+        // na tela enquanto isso, sem marcar como erro.
+        setItems((prev) => [
+          ...prev,
+          {
+            id: `offline-${Date.now()}`,
+            user_id: '',
+            space_id: input.space_id,
+            name: input.name,
+            quantity: input.quantity,
+            category: input.category,
+            checked: false,
+            created_at: new Date().toISOString(),
+          },
+        ])
+        toast.info('Sem conexão — o item foi salvo e será sincronizado sozinho.')
+        return
+      }
       toast.error(err instanceof Error ? err.message : 'Erro ao adicionar item')
     }
   }
@@ -62,6 +90,12 @@ export function useShoppingList() {
       }
       await refresh()
     } catch (err) {
+      if (isOfflineError(err)) {
+        // Mantém a marcação na tela (já foi guardada pra reenviar depois)
+        // em vez de desfazer, já que a ação não falhou de verdade.
+        toast.info('Sem conexão — vai sincronizar sozinho quando o sinal voltar.')
+        return
+      }
       setError(err instanceof Error ? err.message : 'Erro ao atualizar item')
       setItems(previous)
     }

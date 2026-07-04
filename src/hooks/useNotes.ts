@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { fetchNotes, createNote, deleteNote, convertNoteToActivity } from '@/lib/notes'
 import { toast } from '@/lib/toast'
+import { isOfflineError } from '@/lib/offline-sync'
 import type { QuickNote } from '@/types/note'
 
 export function useNotes() {
@@ -23,11 +24,35 @@ export function useNotes() {
     refresh()
   }, [refresh])
 
+  // Quando a conexão volta, recarrega as notas pra buscar o que foi
+  // sincronizado em segundo plano pelo service worker.
+  useEffect(() => {
+    window.addEventListener('bora-pra-vida:sync', refresh)
+    return () => window.removeEventListener('bora-pra-vida:sync', refresh)
+  }, [refresh])
+
   async function addNote(content: string) {
     try {
       const created = await createNote(content)
       setNotes((prev) => [created, ...prev])
     } catch (err) {
+      if (isOfflineError(err)) {
+        // Já foi guardada pelo service worker pra reenviar depois — mostra
+        // uma versão local provisória em vez de tratar como erro.
+        setNotes((prev) => [
+          {
+            id: `offline-${Date.now()}`,
+            user_id: '',
+            content,
+            photo_url: null,
+            converted_to_activity_id: null,
+            created_at: new Date().toISOString(),
+          },
+          ...prev,
+        ])
+        toast.info('Sem conexão — a nota foi salva e será sincronizada sozinha.')
+        return
+      }
       toast.error(err instanceof Error ? err.message : 'Erro ao criar nota')
     }
   }

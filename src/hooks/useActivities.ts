@@ -31,6 +31,13 @@ export function useActivities() {
     refresh()
   }, [refresh])
 
+  // Quando a conexão volta, recarrega as atividades pra buscar o que foi
+  // sincronizado em segundo plano pelo service worker.
+  useEffect(() => {
+    window.addEventListener('bora-pra-vida:sync', refresh)
+    return () => window.removeEventListener('bora-pra-vida:sync', refresh)
+  }, [refresh])
+
   async function changeStatus(id: string, status: ActivityStatus) {
     const activity = activities.find((a) => a.id === id) ?? null
     const previous = activities
