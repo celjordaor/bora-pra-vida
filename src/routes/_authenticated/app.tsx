@@ -4,6 +4,10 @@ import { useActivities } from '@/hooks/useActivities'
 import { StatusColumn } from '@/components/board/StatusColumn'
 import { ActivityModal } from '@/components/board/ActivityModal'
 import { QuickAddBar } from '@/components/board/QuickAddBar'
+import { useConfirm } from '@/components/ui/ConfirmDialogProvider'
+import { toast } from '@/lib/toast'
+import { isOfflineError } from '@/lib/offline-sync'
+import { deleteActivity } from '@/lib/activities'
 import type { Activity, ActivityStatus } from '@/types/activity'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/lib/auth-context'
@@ -24,6 +28,7 @@ function DashboardPage() {
     useActivities()
   const [modalOpen, setModalOpen] = useState(false)
   const [editingActivity, setEditingActivity] = useState<Activity | null>(null)
+  const confirmDialog = useConfirm()
 
   function openCreate() {
     setEditingActivity(null)
@@ -33,6 +38,28 @@ function DashboardPage() {
   function openEdit(activity: Activity) {
     setEditingActivity(activity)
     setModalOpen(true)
+  }
+
+  async function handleSwipeDelete(activity: Activity) {
+    const ok = await confirmDialog({
+      title: 'Excluir atividade',
+      message: `Tem certeza que quer excluir "${activity.title}"? Essa ação não pode ser desfeita.`,
+      confirmLabel: 'Excluir',
+      variant: 'danger',
+    })
+    if (!ok) return
+
+    try {
+      await deleteActivity(activity.id)
+      toast.success('Atividade excluída.')
+      refresh()
+    } catch (err) {
+      if (isOfflineError(err)) {
+        toast.info('Sem conexão — a exclusão será sincronizada quando o sinal voltar.')
+        return
+      }
+      toast.error(err instanceof Error ? err.message : 'Erro ao excluir')
+    }
   }
 
   return (
@@ -67,6 +94,7 @@ function DashboardPage() {
               onCardClick={openEdit}
               onStatusChange={changeStatus}
               onAddClick={openCreate}
+              onDeleteActivity={handleSwipeDelete}
             />
           ))}
         </div>

@@ -8,6 +8,7 @@ interface Props {
   onCardClick: (activity: Activity) => void
   onStatusChange: (id: string, status: ActivityStatus) => void
   onAddClick: () => void
+  onDeleteActivity?: (activity: Activity) => void
 }
 
 export function StatusColumn({
@@ -17,6 +18,7 @@ export function StatusColumn({
   onCardClick,
   onStatusChange,
   onAddClick,
+  onDeleteActivity,
 }: Props) {
   return (
     <div className="flex-1 min-w-[260px] bg-gray-50 rounded-xl p-3 flex flex-col gap-3">
@@ -32,10 +34,11 @@ export function StatusColumn({
             activity={activity}
             onClick={() => onCardClick(activity)}
             onStatusChange={(s) => onStatusChange(activity.id, s)}
+            onSwipeDelete={onDeleteActivity ? () => onDeleteActivity(activity) : undefined}
           />
         ))}
         {activities.length === 0 && (
-          <p className="text-xs text-gray-400 px-1">Nada por aqui.</p>
+          <p className="text-xs text-gray-400 px-1">Tudo tranquilo por aqui.</p>
         )}
       </div>
 

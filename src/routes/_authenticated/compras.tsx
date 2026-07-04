@@ -72,7 +72,9 @@ function ShoppingPage() {
       {loading ? (
         <p className="text-gray-500">Carregando…</p>
       ) : pending.length === 0 && checked.length === 0 ? (
-        <p className="text-gray-400 text-sm">Sua lista está vazia.</p>
+        <p className="text-gray-400 text-sm">
+          Sua lista está vazia 🛒 — adicione o primeiro item acima.
+        </p>
       ) : (
         <div className="flex flex-col gap-5">
           {CATEGORY_ORDER.map((category) => {

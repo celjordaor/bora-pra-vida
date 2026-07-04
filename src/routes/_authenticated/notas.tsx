@@ -75,7 +75,9 @@ function NotesPage() {
       {loading ? (
         <p className="text-gray-500">Carregando…</p>
       ) : notes.length === 0 ? (
-        <p className="text-gray-400 text-sm">Nenhuma nota ainda.</p>
+        <p className="text-gray-400 text-sm">
+          Nenhuma nota ainda 📝 — escreva algo rápido acima.
+        </p>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
           {notes.map((note) => (
