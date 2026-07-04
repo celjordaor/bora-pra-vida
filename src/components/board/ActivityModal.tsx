@@ -18,6 +18,7 @@ import {
 } from '@/lib/activities'
 import { useConfirm } from '@/components/ui/ConfirmDialogProvider'
 import { toast } from '@/lib/toast'
+import { isOfflineError } from '@/lib/offline-sync'
 
 interface Props {
   activity: Activity | null
@@ -114,6 +115,18 @@ export function ActivityModal({ activity, spaces, onClose, onSaved, onDeleted }:
       }
       onSaved()
     } catch (err) {
+      if (isOfflineError(err)) {
+        // A escrita já foi guardada pelo service worker pra reenviar
+        // depois. Como o board só atualiza via recarregamento do servidor,
+        // fecha o formulário em vez de fingir que já apareceu na tela.
+        toast.info(
+          isEditing
+            ? 'Sem conexão — as alterações serão sincronizadas quando o sinal voltar.'
+            : 'Sem conexão — a atividade será criada quando o sinal voltar.'
+        )
+        onClose()
+        return
+      }
       setError(err instanceof Error ? err.message : 'Erro ao salvar')
       setSaving(false)
     }
@@ -135,6 +148,11 @@ export function ActivityModal({ activity, spaces, onClose, onSaved, onDeleted }:
       toast.success('Atividade excluída.')
       onDeleted()
     } catch (err) {
+      if (isOfflineError(err)) {
+        toast.info('Sem conexão — a exclusão será sincronizada quando o sinal voltar.')
+        onClose()
+        return
+      }
       setError(err instanceof Error ? err.message : 'Erro ao excluir')
       setSaving(false)
     }

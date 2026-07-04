@@ -31,9 +31,9 @@ export interface ActivityInput {
 }
 
 export async function createActivity(input: ActivityInput): Promise<Activity> {
-  const { data: userData, error: userError } = await supabase.auth.getUser()
-  if (userError) throw userError
-  const userId = userData.user?.id
+  const { data: sessionData, error: sessionError } = await supabase.auth.getSession()
+  if (sessionError) throw sessionError
+  const userId = sessionData.session?.user.id
   if (!userId) throw new Error('Sessão expirada, faça login novamente.')
 
   const { data, error } = await supabase
@@ -85,9 +85,9 @@ export async function generateNextOccurrence(
   const nextDate = computeNextDueDate(activity.recurrence_rule, activity.due_date)
   if (!nextDate) return null
 
-  const { data: userData, error: userError } = await supabase.auth.getUser()
-  if (userError) throw userError
-  const userId = userData.user?.id
+  const { data: sessionData, error: sessionError } = await supabase.auth.getSession()
+  if (sessionError) throw sessionError
+  const userId = sessionData.session?.user.id
   if (!userId) return null
 
   const { data: created, error } = await supabase

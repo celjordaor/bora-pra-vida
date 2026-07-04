@@ -20,6 +20,11 @@ export default defineConfig({
       filename: 'sw.ts',
       injectRegister: null, // registramos manualmente em main.tsx
       registerType: 'autoUpdate',
+      injectManifest: {
+        // por padrão só js/css/html entram no precache; sem isso, os
+        // ícones do manifest ficam de fora e falham ao abrir offline
+        globPatterns: ['**/*.{js,css,html,png,svg,ico,webmanifest}'],
+      },
       devOptions: {
         enabled: true,
         type: 'module',
