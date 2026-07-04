@@ -1,6 +1,10 @@
 /// <reference lib="webworker" />
-import { precacheAndRoute, cleanupOutdatedCaches } from 'workbox-precaching'
-import { registerRoute } from 'workbox-routing'
+import {
+  precacheAndRoute,
+  cleanupOutdatedCaches,
+  createHandlerBoundToURL,
+} from 'workbox-precaching'
+import { registerRoute, NavigationRoute } from 'workbox-routing'
 import { NetworkFirst } from 'workbox-strategies'
 import { ExpirationPlugin } from 'workbox-expiration'
 import { Queue } from 'workbox-background-sync'
@@ -57,12 +61,26 @@ for (const method of ['POST', 'PATCH', 'DELETE'] as const) {
 }
 
 // ------------------------------------------------------------------
-// Fallback de navegação: pedir uma página estando offline serve o
-// index.html cacheado — o React Router cuida de renderizar a rota certa.
+// Navegação (abrir/trocar de rota, ex.: /compras, /notas): como este é um
+// SPA, todas as rotas são a mesma index.html — o React Router decide o
+// que mostrar no cliente. Tenta a rede primeiro (pra pegar deploys novos);
+// se falhar (offline, ou uma rota que nunca foi visitada antes), cai
+// SEMPRE pro index.html pré-cacheado, nunca deixando a navegação falhar.
 // ------------------------------------------------------------------
+const navigationFallback = createHandlerBoundToURL('/index.html')
+const navigationWithNetworkFirst = new NetworkFirst({
+  cacheName: 'pages',
+  networkTimeoutSeconds: 4,
+})
+
 registerRoute(
-  ({ request }) => request.mode === 'navigate',
-  new NetworkFirst({ cacheName: 'pages', networkTimeoutSeconds: 4 })
+  new NavigationRoute(async (params) => {
+    try {
+      return await navigationWithNetworkFirst.handle(params)
+    } catch {
+      return navigationFallback(params)
+    }
+  })
 )
 
 // ------------------------------------------------------------------
