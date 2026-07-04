@@ -3,6 +3,8 @@ import { createRoot } from 'react-dom/client'
 import { createRouter, RouterProvider } from '@tanstack/react-router'
 import { routeTree } from './routeTree.gen'
 import { AuthProvider } from '@/lib/auth-context'
+import { ConfirmProvider } from '@/components/ui/ConfirmDialogProvider'
+import { AppToaster } from '@/components/ui/AppToaster'
 import './index.css'
 
 // O arquivo routeTree.gen.ts é gerado automaticamente pelo plugin do
@@ -22,7 +24,10 @@ if (!rootElement.innerHTML) {
   root.render(
     <StrictMode>
       <AuthProvider>
-        <RouterProvider router={router} />
+        <ConfirmProvider>
+          <RouterProvider router={router} />
+          <AppToaster />
+        </ConfirmProvider>
       </AuthProvider>
     </StrictMode>
   )

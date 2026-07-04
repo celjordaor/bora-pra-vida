@@ -9,6 +9,8 @@ import {
   toggleSubtask,
   deleteSubtask,
 } from '@/lib/activities'
+import { useConfirm } from '@/components/ui/ConfirmDialogProvider'
+import { toast } from '@/lib/toast'
 
 interface Props {
   activity: Activity | null
@@ -28,6 +30,7 @@ function chipButtonClass(active: boolean) {
 
 export function ActivityModal({ activity, spaces, onClose, onSaved, onDeleted }: Props) {
   const isEditing = !!activity
+  const confirmDialog = useConfirm()
 
   const [title, setTitle] = useState(activity?.title ?? '')
   const [description, setDescription] = useState(activity?.description ?? '')
@@ -62,11 +65,13 @@ export function ActivityModal({ activity, spaces, onClose, onSaved, onDeleted }:
     try {
       if (isEditing) {
         await updateActivity(activity!.id, payload)
+        toast.success('Atividade atualizada.')
       } else {
         const created = await createActivity(payload)
         for (const [i, s] of subtasks.entries()) {
           await addSubtask(created.id, s.title, i, s.done)
         }
+        toast.success('Atividade criada.')
       }
       onSaved()
     } catch (err) {
@@ -77,10 +82,18 @@ export function ActivityModal({ activity, spaces, onClose, onSaved, onDeleted }:
 
   async function handleDelete() {
     if (!activity) return
-    if (!confirm('Excluir esta atividade?')) return
+    const ok = await confirmDialog({
+      title: 'Excluir atividade',
+      message: `Tem certeza que quer excluir "${activity.title}"? Essa ação não pode ser desfeita.`,
+      confirmLabel: 'Excluir',
+      variant: 'danger',
+    })
+    if (!ok) return
+
     setSaving(true)
     try {
       await deleteActivity(activity.id)
+      toast.success('Atividade excluída.')
       onDeleted()
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Erro ao excluir')
