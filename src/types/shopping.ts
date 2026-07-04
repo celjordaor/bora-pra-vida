@@ -9,6 +9,16 @@ export interface ShoppingItem {
   created_at: string
 }
 
+export interface ShoppingCategoryRecord {
+  id: string
+  user_id: string
+  name: string
+  color: string
+  icon: string | null
+  sort_order: number
+  active: boolean
+}
+
 export interface FrequentItem {
   id: string
   user_id: string

@@ -1,5 +1,5 @@
 import { supabase } from './supabase'
-import type { ShoppingItem, FrequentItem } from '@/types/shopping'
+import type { ShoppingItem, FrequentItem, ShoppingCategoryRecord } from '@/types/shopping'
 
 export async function fetchShoppingItems(): Promise<ShoppingItem[]> {
   const { data, error } = await supabase
@@ -188,5 +188,88 @@ export async function deleteShoppingItem(id: string) {
 export async function clearCheckedItems(ids: string[]) {
   if (ids.length === 0) return
   const { error } = await supabase.from('shopping_items').delete().in('id', ids)
+  if (error) throw error
+}
+
+// ------------------------------------------------------------
+// Categorias de compras (CRUD completo, gerenciado em Configurações)
+// ------------------------------------------------------------
+
+export async function fetchShoppingCategories(): Promise<ShoppingCategoryRecord[]> {
+  const { data, error } = await supabase
+    .from('shopping_categories')
+    .select('*')
+    .order('sort_order')
+
+  if (error) throw error
+  return data ?? []
+}
+
+export async function createShoppingCategory(input: {
+  name: string
+  color: string
+  icon: string | null
+}): Promise<ShoppingCategoryRecord> {
+  const { data: sessionData, error: sessionError } = await supabase.auth.getSession()
+  if (sessionError) throw sessionError
+  const userId = sessionData.session?.user.id
+  if (!userId) throw new Error('Sessão expirada, faça login novamente.')
+
+  const { data: last } = await supabase
+    .from('shopping_categories')
+    .select('sort_order')
+    .eq('user_id', userId)
+    .order('sort_order', { ascending: false })
+    .limit(1)
+    .maybeSingle()
+
+  const nextOrder = (last?.sort_order ?? -1) + 1
+
+  const { data, error } = await supabase
+    .from('shopping_categories')
+    .insert({
+      user_id: userId,
+      name: input.name.trim(),
+      color: input.color,
+      icon: input.icon,
+      sort_order: nextOrder,
+    })
+    .select()
+    .single()
+
+  if (error) throw error
+  return data as ShoppingCategoryRecord
+}
+
+export async function updateShoppingCategory(
+  id: string,
+  patch: Partial<Pick<ShoppingCategoryRecord, 'name' | 'color' | 'icon' | 'active' | 'sort_order'>>
+) {
+  const { error } = await supabase.from('shopping_categories').update(patch).eq('id', id)
+  if (error) throw error
+}
+
+/** Exclui a categoria e reatribui os itens que a usavam pra uma categoria
+ * de fallback (normalmente "Outros"), pra não deixar item órfão. */
+export async function deleteShoppingCategory(id: string, fallbackName: string) {
+  const { data: category, error: findError } = await supabase
+    .from('shopping_categories')
+    .select('name')
+    .eq('id', id)
+    .single()
+  if (findError) throw findError
+
+  if (category) {
+    await supabase
+      .from('shopping_items')
+      .update({ category: fallbackName })
+      .eq('category', category.name)
+    await supabase
+      .from('frequent_items')
+      .update({ category: fallbackName })
+      .eq('category', category.name)
+  }
+
+  const { error } = await supabase.from('shopping_categories').delete().eq('id', id)
   if (error) throw error
 }

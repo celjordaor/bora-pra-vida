@@ -13,12 +13,17 @@ export function NoteCard({ note, onConvert, onDelete }: Props) {
       <div className="flex items-center justify-between">
         <button
           onClick={onConvert}
-          className="text-xs text-navy-600 hover:text-navy-950 underline"
+          title="Converter em tarefa"
+          className="text-navy-700 hover:text-navy-950 transition-colors"
         >
-          Converter em tarefa
+          ✅ <span className="text-xs align-middle">Converter</span>
         </button>
-        <button onClick={onDelete} className="text-xs text-gray-500 hover:text-red-600">
-          Excluir
+        <button
+          onClick={onDelete}
+          title="Excluir nota"
+          className="text-gray-500 hover:text-red-600 transition-colors"
+        >
+          🗑️
         </button>
       </div>
     </div>

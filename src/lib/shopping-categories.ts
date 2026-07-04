@@ -1,124 +1,119 @@
-export const CATEGORY_ORDER = [
-  'hortifruti',
-  'acougue',
-  'padaria',
-  'laticinios',
-  'mercearia',
-  'bebidas',
-  'limpeza',
-  'higiene',
-  'outros',
-] as const
-
-export type ShoppingCategory = (typeof CATEGORY_ORDER)[number]
-
-export const CATEGORY_LABELS: Record<ShoppingCategory, string> = {
-  hortifruti: 'Hortifruti',
-  acougue: 'Açougue',
-  padaria: 'Padaria',
-  laticinios: 'Laticínios',
-  mercearia: 'Mercearia',
-  bebidas: 'Bebidas',
-  limpeza: 'Limpeza',
-  higiene: 'Higiene',
-  outros: 'Outros',
+function stripAccents(text: string): string {
+  return text.normalize('NFD').replace(/[\u0300-\u036f]/g, '')
 }
 
-const KEYWORD_MAP: Record<string, ShoppingCategory> = {
+// Palpite inicial (nomes batem com as categorias padrão criadas pro
+// usuário). Se o usuário renomeou/excluiu essas categorias, o palpite cai
+// pra "Outros" (ver suggestCategoryName abaixo).
+const KEYWORD_MAP: Record<string, string> = {
   // hortifruti
-  alface: 'hortifruti',
-  tomate: 'hortifruti',
-  cebola: 'hortifruti',
-  batata: 'hortifruti',
-  cenoura: 'hortifruti',
-  banana: 'hortifruti',
-  maçã: 'hortifruti',
-  laranja: 'hortifruti',
-  limão: 'hortifruti',
-  uva: 'hortifruti',
-  mamão: 'hortifruti',
-  abacate: 'hortifruti',
-  pepino: 'hortifruti',
-  brócolis: 'hortifruti',
-  couve: 'hortifruti',
-  repolho: 'hortifruti',
-  pimentão: 'hortifruti',
-  alho: 'hortifruti',
+  alface: 'Hortifruti',
+  tomate: 'Hortifruti',
+  cebola: 'Hortifruti',
+  batata: 'Hortifruti',
+  cenoura: 'Hortifruti',
+  banana: 'Hortifruti',
+  maçã: 'Hortifruti',
+  laranja: 'Hortifruti',
+  limão: 'Hortifruti',
+  uva: 'Hortifruti',
+  mamão: 'Hortifruti',
+  abacate: 'Hortifruti',
+  pepino: 'Hortifruti',
+  brócolis: 'Hortifruti',
+  couve: 'Hortifruti',
+  repolho: 'Hortifruti',
+  pimentão: 'Hortifruti',
+  alho: 'Hortifruti',
 
   // açougue
-  carne: 'acougue',
-  frango: 'acougue',
-  peixe: 'acougue',
-  linguiça: 'acougue',
-  bacon: 'acougue',
-  bife: 'acougue',
-  costela: 'acougue',
-  picanha: 'acougue',
+  carne: 'Açougue',
+  frango: 'Açougue',
+  peixe: 'Açougue',
+  linguiça: 'Açougue',
+  bacon: 'Açougue',
+  bife: 'Açougue',
+  costela: 'Açougue',
+  picanha: 'Açougue',
 
   // padaria
-  pão: 'padaria',
-  bisnaguinha: 'padaria',
-  baguete: 'padaria',
-  torrada: 'padaria',
+  pão: 'Padaria',
+  bisnaguinha: 'Padaria',
+  baguete: 'Padaria',
+  torrada: 'Padaria',
 
   // laticínios
-  leite: 'laticinios',
-  queijo: 'laticinios',
-  iogurte: 'laticinios',
-  manteiga: 'laticinios',
-  requeijão: 'laticinios',
-  'creme de leite': 'laticinios',
+  leite: 'Laticínios',
+  queijo: 'Laticínios',
+  iogurte: 'Laticínios',
+  manteiga: 'Laticínios',
+  requeijão: 'Laticínios',
+  'creme de leite': 'Laticínios',
 
   // mercearia
-  arroz: 'mercearia',
-  feijão: 'mercearia',
-  macarrão: 'mercearia',
-  óleo: 'mercearia',
-  açúcar: 'mercearia',
-  sal: 'mercearia',
-  farinha: 'mercearia',
-  café: 'mercearia',
-  molho: 'mercearia',
-  biscoito: 'mercearia',
-  bolacha: 'mercearia',
+  arroz: 'Mercearia',
+  feijão: 'Mercearia',
+  macarrão: 'Mercearia',
+  óleo: 'Mercearia',
+  açúcar: 'Mercearia',
+  sal: 'Mercearia',
+  farinha: 'Mercearia',
+  café: 'Mercearia',
+  molho: 'Mercearia',
+  biscoito: 'Mercearia',
+  bolacha: 'Mercearia',
 
   // bebidas
-  refrigerante: 'bebidas',
-  suco: 'bebidas',
-  cerveja: 'bebidas',
-  água: 'bebidas',
-  vinho: 'bebidas',
+  refrigerante: 'Bebidas',
+  suco: 'Bebidas',
+  cerveja: 'Bebidas',
+  água: 'Bebidas',
+  vinho: 'Bebidas',
 
   // limpeza
-  detergente: 'limpeza',
-  sabão: 'limpeza',
-  desinfetante: 'limpeza',
-  amaciante: 'limpeza',
-  esponja: 'limpeza',
-  vassoura: 'limpeza',
+  detergente: 'Limpeza',
+  sabão: 'Limpeza',
+  desinfetante: 'Limpeza',
+  amaciante: 'Limpeza',
+  esponja: 'Limpeza',
+  vassoura: 'Limpeza',
 
   // higiene
-  shampoo: 'higiene',
-  condicionador: 'higiene',
-  sabonete: 'higiene',
-  'creme dental': 'higiene',
-  'papel higiênico': 'higiene',
-  desodorante: 'higiene',
-  absorvente: 'higiene',
-  fralda: 'higiene',
+  shampoo: 'Higiene',
+  condicionador: 'Higiene',
+  sabonete: 'Higiene',
+  'creme dental': 'Higiene',
+  'papel higiênico': 'Higiene',
+  desodorante: 'Higiene',
+  absorvente: 'Higiene',
+  fralda: 'Higiene',
 }
 
-function stripAccents(text: string): string {
-  return text
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-}
-
-export function suggestCategory(name: string): ShoppingCategory {
+function suggestCategoryGuess(name: string): string {
   const normalized = stripAccents(name.toLowerCase().trim())
-
   for (const [keyword, category] of Object.entries(KEYWORD_MAP)) {
     if (normalized.includes(stripAccents(keyword))) return category
   }
-  return 'outros'
+  return 'Outros'
+}
+
+/**
+ * Sugere a categoria pro item, considerando as categorias de verdade do
+ * usuário (que podem ter sido renomeadas, desativadas ou excluídas). Se o
+ * palpite não existir mais, cai pra "Outros" ou a primeira categoria ativa.
+ */
+export function suggestCategoryName(
+  itemName: string,
+  categories: { name: string; active: boolean }[]
+): string {
+  const guess = suggestCategoryGuess(itemName)
+  const match = categories.find(
+    (c) => c.active && c.name.toLowerCase() === guess.toLowerCase()
+  )
+  if (match) return match.name
+
+  const outros = categories.find((c) => c.active && c.name.toLowerCase() === 'outros')
+  if (outros) return outros.name
+
+  return categories.find((c) => c.active)?.name ?? 'Outros'
 }

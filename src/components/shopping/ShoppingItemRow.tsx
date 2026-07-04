@@ -1,20 +1,22 @@
-import type { ShoppingItem } from '@/types/shopping'
+import type { ShoppingItem, ShoppingCategoryRecord } from '@/types/shopping'
 import { SwipeableRow } from '@/components/ui/SwipeableRow'
+import { CategoryPill } from './CategoryPill'
 
 interface Props {
   item: ShoppingItem
+  category?: ShoppingCategoryRecord
   onToggle: (checked: boolean) => void
   onDelete: () => void
 }
 
-export function ShoppingItemRow({ item, onToggle, onDelete }: Props) {
+export function ShoppingItemRow({ item, category, onToggle, onDelete }: Props) {
   return (
     <SwipeableRow
       onSwipeRight={() => onToggle(!item.checked)}
       onSwipeLeft={onDelete}
       rightLabel={item.checked ? '↩ Reabrir' : '✓ Concluir'}
     >
-      <div className="flex items-center gap-2 py-1.5 group">
+      <div className="flex items-center gap-2 py-2 group">
         <input
           type="checkbox"
           checked={item.checked}
@@ -28,12 +30,16 @@ export function ShoppingItemRow({ item, onToggle, onDelete }: Props) {
         >
           {item.name}
         </span>
+        {category && (
+          <CategoryPill name={category.name} color={category.color} icon={category.icon} />
+        )}
         {item.quantity && <span className="text-xs text-gray-400">{item.quantity}</span>}
         <button
           onClick={onDelete}
-          className="text-gray-300 hover:text-red-600 text-xs opacity-0 group-hover:opacity-100 transition-opacity"
+          title="Excluir"
+          className="text-gray-300 hover:text-red-600 opacity-0 group-hover:opacity-100 transition-opacity"
         >
-          ✕
+          🗑️
         </button>
       </div>
     </SwipeableRow>

@@ -13,6 +13,7 @@ import {
   type NotificationPrefs,
 } from '@/lib/notification-prefs'
 import { toast } from '@/lib/toast'
+import { ShoppingCategoriesManager } from '@/components/settings/ShoppingCategoriesManager'
 
 export const Route = createFileRoute('/_authenticated/configuracoes')({
   component: SettingsPage,
@@ -88,10 +89,15 @@ function SettingsPage() {
 
   return (
     <div className="max-w-lg">
-      <h2 className="text-xl font-semibold text-navy-950 mb-6">Configurações</h2>
+      <div className="rounded-xl bg-gradient-to-br from-navy-950 to-navy-600 text-white p-5 mb-6">
+        <h2 className="text-xl font-semibold">⚙️ Configurações</h2>
+        <p className="text-navy-200 text-sm mt-1">
+          Notificações, categorias de compras e preferências do app.
+        </p>
+      </div>
 
       <div className="bg-white rounded-xl ring-1 ring-black/5 p-6 mb-6">
-        <h3 className="font-medium text-navy-950 mb-2">Notificações push</h3>
+        <h3 className="font-medium text-navy-950 mb-2">🔔 Notificações push</h3>
 
         {!supported ? (
           <p className="text-sm text-gray-500">
@@ -136,11 +142,11 @@ function SettingsPage() {
       </div>
 
       {subscribed && !loadingPrefs && prefs && (
-        <div className="bg-white rounded-xl ring-1 ring-black/5 p-6 flex flex-col gap-4">
-          <h3 className="font-medium text-navy-950">Preferências</h3>
+        <div className="bg-white rounded-xl ring-1 ring-black/5 p-6 flex flex-col gap-4 mb-6">
+          <h3 className="font-medium text-navy-950">Preferências de lembrete</h3>
 
           <label className="flex items-center justify-between text-sm gap-4">
-            <span>Lembrete no horário da tarefa</span>
+            <span>⏰ Lembrete no horário da tarefa</span>
             <input
               type="checkbox"
               checked={prefs.task_reminders_enabled}
@@ -152,7 +158,7 @@ function SettingsPage() {
           </label>
 
           <label className="flex items-center justify-between text-sm gap-4">
-            <span>Resumo matinal</span>
+            <span>☀️ Resumo matinal</span>
             <input
               type="checkbox"
               checked={prefs.morning_summary_enabled}
@@ -164,7 +170,7 @@ function SettingsPage() {
           </label>
 
           <label className="flex items-center justify-between text-sm gap-4">
-            <span>Lembrete de fim de dia</span>
+            <span>🌙 Lembrete de fim de dia</span>
             <input
               type="checkbox"
               checked={prefs.end_of_day_enabled}
@@ -186,15 +192,17 @@ function SettingsPage() {
               />
             </label>
           )}
-
-          <p className="text-xs text-gray-400">
-            ⚠️ Essas preferências ainda não disparam lembretes sozinhas — por
-            enquanto só o botão "Enviar notificação de teste" funciona. O
-            disparo automático (cron) é a próxima entrega, depois de
-            confirmarmos que o envio manual está ok.
-          </p>
         </div>
       )}
+
+      <div className="bg-white rounded-xl ring-1 ring-black/5 p-6">
+        <h3 className="font-medium text-navy-950 mb-1">🏷️ Categorias de compras</h3>
+        <p className="text-xs text-gray-500 mb-3">
+          Crie, renomeie, mude a cor ou desative categorias — os itens da
+          lista de compras usam elas pra se agrupar automaticamente.
+        </p>
+        <ShoppingCategoriesManager />
+      </div>
     </div>
   )
 }

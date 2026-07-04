@@ -49,7 +49,12 @@ function NotesPage() {
 
   return (
     <div className="max-w-3xl">
-      <h2 className="text-xl font-semibold text-navy-950 mb-4">Notas</h2>
+      <div className="rounded-xl bg-gradient-to-br from-navy-950 to-navy-600 text-white p-5 mb-6">
+        <h2 className="text-xl font-semibold">📝 Notas</h2>
+        <p className="text-navy-200 text-sm mt-1">
+          {notes.length === 0 ? 'Nenhuma nota ainda.' : `${notes.length} nota(s)`}
+        </p>
+      </div>
 
       <form onSubmit={handleSubmit} className="mb-6 flex flex-col gap-2">
         <div className="flex items-start gap-2 rounded-lg border border-gray-200 px-3 py-2 focus-within:ring-2 focus-within:ring-navy-600">

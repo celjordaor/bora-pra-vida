@@ -1,24 +1,28 @@
 import { useState, type FormEvent } from 'react'
-import { suggestCategory, CATEGORY_ORDER, CATEGORY_LABELS } from '@/lib/shopping-categories'
+import { suggestCategoryName } from '@/lib/shopping-categories'
 import { parseSpokenItems } from '@/lib/shopping-voice-parser'
 import { MicButton } from '@/components/ui/MicButton'
 import { toast } from '@/lib/toast'
+import type { ShoppingCategoryRecord } from '@/types/shopping'
 
 interface Props {
+  categories: ShoppingCategoryRecord[]
   onAdd: (input: { name: string; quantity: string | null; category: string }) => void
 }
 
-export function AddItemForm({ onAdd }: Props) {
+export function AddItemForm({ categories, onAdd }: Props) {
   const [name, setName] = useState('')
   const [quantity, setQuantity] = useState('')
   const [category, setCategory] = useState('auto')
+  const activeCategories = categories.filter((c) => c.active)
 
   function handleSubmit(e: FormEvent) {
     e.preventDefault()
     const trimmed = name.trim()
     if (!trimmed) return
 
-    const finalCategory = category === 'auto' ? suggestCategory(trimmed) : category
+    const finalCategory =
+      category === 'auto' ? suggestCategoryName(trimmed, categories) : category
     onAdd({ name: trimmed, quantity: quantity.trim() || null, category: finalCategory })
 
     setName('')
@@ -38,7 +42,7 @@ export function AddItemForm({ onAdd }: Props) {
 
     // frase com vários itens ("leite, pão e ovos"): adiciona todos direto
     for (const itemName of items) {
-      onAdd({ name: itemName, quantity: null, category: suggestCategory(itemName) })
+      onAdd({ name: itemName, quantity: null, category: suggestCategoryName(itemName, categories) })
     }
     toast.success(`${items.length} itens adicionados por voz.`)
   }
@@ -66,9 +70,10 @@ export function AddItemForm({ onAdd }: Props) {
         className="rounded-lg border border-gray-200 px-2 py-2 text-sm"
       >
         <option value="auto">Categoria automática</option>
-        {CATEGORY_ORDER.map((c) => (
-          <option key={c} value={c}>
-            {CATEGORY_LABELS[c]}
+        {activeCategories.map((c) => (
+          <option key={c.id} value={c.name}>
+            {c.icon ? `${c.icon} ` : ''}
+            {c.name}
           </option>
         ))}
       </select>

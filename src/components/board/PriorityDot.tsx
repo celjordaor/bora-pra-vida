@@ -1,22 +1,24 @@
 import type { ActivityPriority } from '@/types/activity'
 
-const COLORS: Record<ActivityPriority, string> = {
-  low: 'bg-gray-300',
-  medium: 'bg-amber-400',
-  high: 'bg-red-500',
+const STYLES: Record<ActivityPriority, string> = {
+  low: 'bg-gray-100 text-gray-500',
+  medium: 'bg-amber-100 text-amber-700',
+  high: 'bg-red-100 text-red-700',
 }
 
 const LABELS: Record<ActivityPriority, string> = {
-  low: 'Prioridade baixa',
-  medium: 'Prioridade média',
-  high: 'Prioridade alta',
+  low: 'Baixa',
+  medium: 'Média',
+  high: 'Alta',
 }
 
 export function PriorityDot({ priority }: { priority: ActivityPriority }) {
   return (
     <span
-      title={LABELS[priority]}
-      className={`mt-1 h-2 w-2 rounded-full shrink-0 ${COLORS[priority]}`}
-    />
+      title={`Prioridade ${LABELS[priority].toLowerCase()}`}
+      className={`text-[10px] font-medium rounded-full px-1.5 py-0.5 shrink-0 ${STYLES[priority]}`}
+    >
+      {LABELS[priority]}
+    </span>
   )
 }

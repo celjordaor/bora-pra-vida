@@ -64,16 +64,16 @@ function DashboardPage() {
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-4">
+      <div className="rounded-xl bg-gradient-to-br from-navy-950 to-navy-600 text-white p-5 mb-4 flex items-center justify-between gap-4">
         <div>
-          <h2 className="text-xl font-semibold text-navy-950">Hoje</h2>
-          <p className="text-gray-500 text-sm">{session?.user.email}</p>
+          <h2 className="text-xl font-semibold">📅 Hoje</h2>
+          <p className="text-navy-200 text-sm mt-1">{session?.user.email}</p>
         </div>
         <button
           onClick={openCreate}
-          className="text-sm text-navy-600 hover:text-navy-950 underline shrink-0"
+          className="text-sm bg-white/10 hover:bg-white/20 transition-colors rounded-lg px-3 py-1.5 shrink-0"
         >
-          Formulário completo (subtarefas, repetição…)
+          Formulário completo
         </button>
       </div>
 
