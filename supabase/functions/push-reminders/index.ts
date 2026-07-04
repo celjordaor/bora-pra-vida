@@ -58,6 +58,7 @@ function nowInTimeZone(timeZone: string): Date {
 Deno.serve(async (req) => {
   const secret = req.headers.get('x-cron-secret')
   if (secret !== CRON_SECRET) {
+    console.log('Chamada recusada: x-cron-secret não bateu.')
     return new Response('Unauthorized', { status: 401 })
   }
 
@@ -74,32 +75,55 @@ Deno.serve(async (req) => {
 
   const prefsByUser = new Map((prefsRows ?? []).map((p: any) => [p.user_id, p]))
 
+  console.log(`prefs encontradas: ${prefsRows?.length ?? 0}`)
+
   // --------------------------------------------------------------
   // 1) Lembrete no horário da tarefa (janela de tolerância: 10 minutos,
   //    pra cobrir possíveis atrasos do próprio cron)
   // --------------------------------------------------------------
-  const { data: dueActivities } = await admin
+  const { data: dueActivities, error: dueActivitiesError } = await admin
     .from('activities')
     .select('id, user_id, title, due_date, due_time, status, reminder_sent_at')
     .not('due_time', 'is', null)
     .neq('status', 'done')
     .is('reminder_sent_at', null)
 
+  if (dueActivitiesError) {
+    console.log('Erro ao buscar atividades:', JSON.stringify(dueActivitiesError))
+  }
+  console.log(
+    `atividades candidatas (due_time preenchido, não concluídas, sem lembrete ainda): ${dueActivities?.length ?? 0}`
+  )
+
   for (const activity of dueActivities ?? []) {
     const prefs = prefsByUser.get(activity.user_id)
-    if (!prefs?.task_reminders_enabled) continue
+    if (!prefs?.task_reminders_enabled) {
+      console.log(`[${activity.title}] pulada: task_reminders_enabled = false ou sem prefs`)
+      continue
+    }
 
     const tz = timezoneByUser.get(activity.user_id) ?? 'America/Sao_Paulo'
     const nowLocal = nowInTimeZone(tz)
     const todayLocalISO = nowLocal.toISOString().slice(0, 10)
-    if (activity.due_date !== todayLocalISO) continue
+
+    if (activity.due_date !== todayLocalISO) {
+      console.log(
+        `[${activity.title}] pulada: due_date=${activity.due_date} != hoje(${todayLocalISO}) no fuso ${tz}`
+      )
+      continue
+    }
 
     const [dueHour, dueMinute] = activity.due_time.slice(0, 5).split(':').map(Number)
     const dueMinutesTotal = dueHour * 60 + dueMinute
     const nowMinutesTotal = nowLocal.getHours() * 60 + nowLocal.getMinutes()
     const minutesLate = nowMinutesTotal - dueMinutesTotal
 
+    console.log(
+      `[${activity.title}] due_time=${activity.due_time} agora_local=${nowLocal.getHours()}:${nowLocal.getMinutes()} minutesLate=${minutesLate}`
+    )
+
     if (minutesLate >= 0 && minutesLate < 10) {
+      console.log(`[${activity.title}] disparando push!`)
       await sendToUser(activity.user_id, {
         title: `⏰ ${activity.title}`,
         body: 'Está na hora dessa atividade.',
@@ -149,6 +173,8 @@ Deno.serve(async (req) => {
       .update({ last_morning_summary_date: todayLocalISO })
       .eq('user_id', prefs.user_id)
   }
+
+  console.log('Execução concluída.')
 
   return new Response(JSON.stringify({ ok: true }), {
     headers: { 'Content-Type': 'application/json' },
