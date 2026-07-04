@@ -1,6 +1,13 @@
 import { useState } from 'react'
-import type { Activity, ActivityPriority, Space, Subtask } from '@/types/activity'
+import type {
+  Activity,
+  ActivityPriority,
+  RecurrenceType,
+  Space,
+  Subtask,
+} from '@/types/activity'
 import { todayISO, tomorrowISO } from '@/lib/date'
+import { WEEKDAYS } from '@/lib/recurrence'
 import {
   createActivity,
   updateActivity,
@@ -40,16 +47,40 @@ export function ActivityModal({ activity, spaces, onClose, onSaved, onDeleted }:
   )
   const [dueDate, setDueDate] = useState(activity?.due_date ?? '')
   const [dueTime, setDueTime] = useState(activity?.due_time?.slice(0, 5) ?? '')
+  const [recurrenceType, setRecurrenceType] = useState<RecurrenceType>(
+    activity?.recurrence_rule?.type ?? 'none'
+  )
+  const [recurrenceDays, setRecurrenceDays] = useState<number[]>(
+    activity?.recurrence_rule?.days ?? []
+  )
+  const [recurrenceInterval, setRecurrenceInterval] = useState(
+    activity?.recurrence_rule?.intervalDays ?? 2
+  )
   const [subtasks, setSubtasks] = useState<Subtask[]>(activity?.subtasks ?? [])
   const [newSubtask, setNewSubtask] = useState('')
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
+
+  function toggleWeekday(day: number) {
+    setRecurrenceDays((prev) =>
+      prev.includes(day) ? prev.filter((d) => d !== day) : [...prev, day].sort()
+    )
+  }
 
   async function handleSave() {
     if (!title.trim()) {
       setError('Dá um título pra atividade.')
       return
     }
+    if (recurrenceType !== 'none' && !dueDate) {
+      setError('Pra repetir, a atividade precisa de uma data (use os chips acima).')
+      return
+    }
+    if (recurrenceType === 'weekdays' && recurrenceDays.length === 0) {
+      setError('Selecione pelo menos um dia da semana pra repetição.')
+      return
+    }
+
     setSaving(true)
     setError(null)
 
@@ -60,6 +91,14 @@ export function ActivityModal({ activity, spaces, onClose, onSaved, onDeleted }:
       priority,
       due_date: dueDate || null,
       due_time: dueDate && dueTime ? dueTime : null,
+      recurrence_rule:
+        recurrenceType === 'none'
+          ? null
+          : recurrenceType === 'weekdays'
+            ? { type: recurrenceType, days: recurrenceDays }
+            : recurrenceType === 'custom'
+              ? { type: recurrenceType, intervalDays: recurrenceInterval }
+              : { type: recurrenceType },
     }
 
     try {
@@ -256,6 +295,59 @@ export function ActivityModal({ activity, spaces, onClose, onSaved, onDeleted }:
                 </>
               )}
             </div>
+          </div>
+
+          <div>
+            <p className="text-sm text-gray-600 mb-1">Repetição</p>
+            <select
+              value={recurrenceType}
+              onChange={(e) => setRecurrenceType(e.target.value as RecurrenceType)}
+              className="rounded-lg border border-gray-200 px-3 py-2 text-sm w-full"
+            >
+              <option value="none">Não repete</option>
+              <option value="daily">Diariamente</option>
+              <option value="weekdays">Dias específicos da semana</option>
+              <option value="weekly">Semanalmente</option>
+              <option value="monthly">Mensalmente</option>
+              <option value="custom">Personalizado (a cada N dias)</option>
+            </select>
+
+            {recurrenceType === 'weekdays' && (
+              <div className="flex gap-1 flex-wrap mt-2">
+                {WEEKDAYS.map(({ index, label }) => (
+                  <button
+                    key={index}
+                    type="button"
+                    onClick={() => toggleWeekday(index)}
+                    className={chipButtonClass(recurrenceDays.includes(index))}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+            )}
+
+            {recurrenceType === 'custom' && (
+              <div className="flex items-center gap-2 mt-2 text-sm text-gray-600">
+                A cada
+                <input
+                  type="number"
+                  min={1}
+                  value={recurrenceInterval}
+                  onChange={(e) =>
+                    setRecurrenceInterval(Math.max(1, Number(e.target.value)))
+                  }
+                  className="w-16 rounded-lg border border-gray-200 px-2 py-1 text-sm"
+                />
+                dia(s)
+              </div>
+            )}
+
+            {recurrenceType !== 'none' && !dueDate && (
+              <p className="text-xs text-amber-600 mt-1">
+                Defina uma data acima — a repetição usa ela como ponto de partida.
+              </p>
+            )}
           </div>
 
           <div>

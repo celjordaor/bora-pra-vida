@@ -1,5 +1,11 @@
 import { useCallback, useEffect, useState } from 'react'
-import { fetchActivities, fetchSpaces, updateActivityStatus } from '@/lib/activities'
+import {
+  fetchActivities,
+  fetchSpaces,
+  updateActivityStatus,
+  generateNextOccurrence,
+} from '@/lib/activities'
+import { toast } from '@/lib/toast'
 import type { Activity, ActivityStatus, Space } from '@/types/activity'
 
 export function useActivities() {
@@ -26,11 +32,20 @@ export function useActivities() {
   }, [refresh])
 
   async function changeStatus(id: string, status: ActivityStatus) {
+    const activity = activities.find((a) => a.id === id) ?? null
     const previous = activities
     // atualização otimista: já move o card na tela antes da resposta do servidor
     setActivities((prev) => prev.map((a) => (a.id === id ? { ...a, status } : a)))
     try {
       await updateActivityStatus(id, status)
+
+      if (status === 'done' && activity) {
+        const created = await generateNextOccurrence(activity)
+        if (created) {
+          toast.success('Próxima ocorrência criada automaticamente.')
+          refresh()
+        }
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Erro ao mover atividade')
       setActivities(previous)

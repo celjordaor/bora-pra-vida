@@ -1,6 +1,7 @@
 import type { Activity, ActivityStatus } from '@/types/activity'
 import { getDateChipInfo } from '@/lib/date'
 import { nextStatus, prevStatus } from '@/lib/activities'
+import { describeRecurrence } from '@/lib/recurrence'
 import { PriorityDot } from './PriorityDot'
 import { DateChip } from './DateChip'
 
@@ -12,6 +13,7 @@ interface Props {
 
 export function ActivityCard({ activity, onClick, onStatusChange }: Props) {
   const dateChip = getDateChipInfo(activity.due_date, activity.status)
+  const recurrenceLabel = describeRecurrence(activity.recurrence_rule)
   const subtasks = activity.subtasks ?? []
   const doneCount = subtasks.filter((s) => s.done).length
 
@@ -25,6 +27,11 @@ export function ActivityCard({ activity, onClick, onStatusChange }: Props) {
         <p className="text-sm font-medium text-navy-950 flex-1 leading-snug">
           {activity.title}
         </p>
+        {recurrenceLabel && (
+          <span title={recurrenceLabel} className="text-xs shrink-0">
+            🔁
+          </span>
+        )}
       </div>
 
       {(dateChip || subtasks.length > 0) && (

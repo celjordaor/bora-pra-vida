@@ -1,6 +1,22 @@
 export type ActivityStatus = 'todo' | 'doing' | 'done'
 export type ActivityPriority = 'low' | 'medium' | 'high'
 
+export type RecurrenceType =
+  | 'none'
+  | 'daily'
+  | 'weekdays'
+  | 'weekly'
+  | 'monthly'
+  | 'custom'
+
+export interface RecurrenceRule {
+  type: RecurrenceType
+  /** 0=Dom, 1=Seg, …, 6=Sáb — usado só quando type === 'weekdays' */
+  days?: number[]
+  /** usado só quando type === 'custom' */
+  intervalDays?: number
+}
+
 export interface Subtask {
   id: string
   activity_id: string
@@ -19,6 +35,8 @@ export interface Activity {
   priority: ActivityPriority
   due_date: string | null // 'YYYY-MM-DD'
   due_time: string | null // 'HH:MM:SS'
+  recurrence_rule: RecurrenceRule | null
+  recurrence_parent_id: string | null
   completed_at: string | null
   created_at: string
   subtasks?: Subtask[]

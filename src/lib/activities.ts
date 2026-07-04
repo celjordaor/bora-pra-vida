@@ -1,5 +1,6 @@
 import { supabase } from './supabase'
-import type { Activity, ActivityStatus, Space } from '@/types/activity'
+import { computeNextDueDate } from './recurrence'
+import type { Activity, ActivityStatus, RecurrenceRule, Space } from '@/types/activity'
 
 export async function fetchActivities(): Promise<Activity[]> {
   const { data, error } = await supabase
@@ -34,6 +35,7 @@ export interface ActivityInput {
   priority: Activity['priority']
   due_date: string | null
   due_time: string | null
+  recurrence_rule: RecurrenceRule | null
 }
 
 export async function createActivity(input: ActivityInput): Promise<Activity> {
@@ -72,6 +74,55 @@ export async function updateActivityStatus(id: string, status: ActivityStatus) {
 export async function deleteActivity(id: string) {
   const { error } = await supabase.from('activities').delete().eq('id', id)
   if (error) throw error
+}
+
+/**
+ * Se a atividade tiver uma regra de recorrência e uma data definida, cria
+ * automaticamente a próxima ocorrência (mesmo título, espaço, prioridade e
+ * subtarefas — mas "zeradas" — com a data calculada a partir da regra).
+ * Retorna a nova atividade criada, ou null se não havia recorrência a aplicar.
+ */
+export async function generateNextOccurrence(
+  activity: Activity
+): Promise<Activity | null> {
+  if (!activity.recurrence_rule || activity.recurrence_rule.type === 'none') {
+    return null
+  }
+  if (!activity.due_date) return null
+
+  const nextDate = computeNextDueDate(activity.recurrence_rule, activity.due_date)
+  if (!nextDate) return null
+
+  const { data: userData, error: userError } = await supabase.auth.getUser()
+  if (userError) throw userError
+  const userId = userData.user?.id
+  if (!userId) return null
+
+  const { data: created, error } = await supabase
+    .from('activities')
+    .insert({
+      user_id: userId,
+      space_id: activity.space_id,
+      title: activity.title,
+      description: activity.description,
+      status: 'todo',
+      priority: activity.priority,
+      due_date: nextDate,
+      due_time: activity.due_time,
+      recurrence_rule: activity.recurrence_rule,
+      recurrence_parent_id: activity.recurrence_parent_id ?? activity.id,
+    })
+    .select()
+    .single()
+
+  if (error) throw error
+
+  const subtasks = activity.subtasks ?? []
+  for (const [i, s] of subtasks.entries()) {
+    await addSubtask(created.id, s.title, i, false)
+  }
+
+  return created as Activity
 }
 
 export async function addSubtask(
