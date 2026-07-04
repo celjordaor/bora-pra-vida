@@ -1,0 +1,16 @@
+node_modules
+dist
+dist-ssr
+*.local
+
+.env
+.env.local
+.env.*.local
+
+# TanStack Router gera este arquivo automaticamente
+src/routeTree.gen.ts
+
+.DS_Store
+*.log
+.vscode/*
+!.vscode/extensions.json
