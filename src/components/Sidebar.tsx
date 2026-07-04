@@ -27,6 +27,13 @@ export function Sidebar() {
         >
           Notas
         </Link>
+        <Link
+          to="/configuracoes"
+          activeProps={{ className: 'bg-navy-800' }}
+          className="rounded-lg px-3 py-2 hover:bg-navy-800 transition-colors"
+        >
+          Configurações
+        </Link>
       </nav>
     </aside>
   )

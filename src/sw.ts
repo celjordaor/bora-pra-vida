@@ -101,4 +101,45 @@ self.addEventListener('message', (event) => {
   }
 })
 
+// ------------------------------------------------------------------
+// Notificações push: mostra a notificação recebida do servidor.
+// O payload é um JSON com { title, body, url } (ver Edge Function
+// supabase/functions/push-send).
+// ------------------------------------------------------------------
+self.addEventListener('push', (event) => {
+  let data: { title?: string; body?: string; url?: string } = {}
+  try {
+    data = event.data?.json() ?? {}
+  } catch {
+    data = { title: 'Bora pra Vida', body: event.data?.text() }
+  }
+
+  const title = data.title || 'Bora pra Vida'
+  event.waitUntil(
+    self.registration.showNotification(title, {
+      body: data.body || '',
+      icon: '/icons/icon-192.png',
+      badge: '/icons/icon-192.png',
+      data: { url: data.url || '/app' },
+    })
+  )
+})
+
+// Clicar na notificação: foca uma aba já aberta do app, ou abre uma nova
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close()
+  const targetUrl = event.notification.data?.url || '/app'
+
+  event.waitUntil(
+    self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientsArr) => {
+      const existing = clientsArr.find((c) => c.url.includes(self.location.origin))
+      if (existing) {
+        existing.focus()
+        return existing.navigate(targetUrl)
+      }
+      return self.clients.openWindow(targetUrl)
+    })
+  )
+})
+
 self.skipWaiting()
