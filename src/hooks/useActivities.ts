@@ -6,6 +6,7 @@ import {
 } from '@/lib/activities'
 import { fetchSpaces } from '@/lib/spaces'
 import { toast } from '@/lib/toast'
+import { isOfflineError } from '@/lib/offline-sync'
 import type { Activity, ActivityStatus, Space } from '@/types/activity'
 
 export function useActivities() {
@@ -21,7 +22,13 @@ export function useActivities() {
       setActivities(a)
       setSpaces(s)
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Erro ao carregar dados')
+      if (isOfflineError(err)) {
+        setError(
+          'Você está sem internet e as atividades ainda não tinham sido carregadas antes neste dispositivo — conecte-se pelo menos uma vez pra poder usá-las offline depois.'
+        )
+      } else {
+        setError(err instanceof Error ? err.message : 'Erro ao carregar dados')
+      }
     } finally {
       setLoading(false)
     }

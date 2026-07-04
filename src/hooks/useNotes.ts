@@ -14,7 +14,13 @@ export function useNotes() {
     try {
       setNotes(await fetchNotes())
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Erro ao carregar notas')
+      if (isOfflineError(err)) {
+        setError(
+          'Você está sem internet e as notas ainda não tinham sido carregadas antes neste dispositivo — conecte-se pelo menos uma vez pra poder usá-las offline depois.'
+        )
+      } else {
+        setError(err instanceof Error ? err.message : 'Erro ao carregar notas')
+      }
     } finally {
       setLoading(false)
     }

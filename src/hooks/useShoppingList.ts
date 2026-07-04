@@ -25,7 +25,13 @@ export function useShoppingList() {
       setItems(i)
       setFrequentItems(f)
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Erro ao carregar a lista')
+      if (isOfflineError(err)) {
+        setError(
+          'Você está sem internet e esta lista ainda não tinha sido carregada antes neste dispositivo — conecte-se pelo menos uma vez pra poder usá-la offline depois.'
+        )
+      } else {
+        setError(err instanceof Error ? err.message : 'Erro ao carregar a lista')
+      }
     } finally {
       setLoading(false)
     }
