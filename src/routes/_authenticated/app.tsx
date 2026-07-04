@@ -1,31 +1,93 @@
 import { createFileRoute } from '@tanstack/react-router'
-import { useAuth } from '@/lib/auth-context'
+import { useState } from 'react'
+import { useActivities } from '@/hooks/useActivities'
+import { StatusColumn } from '@/components/board/StatusColumn'
+import { ActivityModal } from '@/components/board/ActivityModal'
+import type { Activity, ActivityStatus } from '@/types/activity'
 import { supabase } from '@/lib/supabase'
+import { useAuth } from '@/lib/auth-context'
 
 export const Route = createFileRoute('/_authenticated/app')({
   component: DashboardPage,
 })
 
+const COLUMNS: { status: ActivityStatus; title: string }[] = [
+  { status: 'todo', title: 'A fazer' },
+  { status: 'doing', title: 'Fazendo' },
+  { status: 'done', title: 'Feito' },
+]
+
 function DashboardPage() {
   const { session } = useAuth()
+  const { activities, spaces, loading, error, refresh, changeStatus } =
+    useActivities()
+  const [modalOpen, setModalOpen] = useState(false)
+  const [editingActivity, setEditingActivity] = useState<Activity | null>(null)
+
+  function openCreate() {
+    setEditingActivity(null)
+    setModalOpen(true)
+  }
+
+  function openEdit(activity: Activity) {
+    setEditingActivity(activity)
+    setModalOpen(true)
+  }
 
   return (
-    <div className="max-w-2xl">
-      <h2 className="text-xl font-semibold text-navy-950 mb-1">Hoje</h2>
-      <p className="text-gray-600 mb-6">
-        Logado como{' '}
-        <span className="font-medium">{session?.user.email}</span>
-      </p>
-
-      <div className="bg-white rounded-xl ring-1 ring-black/5 p-6">
-        <p className="text-gray-500">
-          Nenhuma atividade ainda. O board de tarefas chega na Fase 2 🚧
-        </p>
+    <div>
+      <div className="flex items-center justify-between mb-6">
+        <div>
+          <h2 className="text-xl font-semibold text-navy-950">Hoje</h2>
+          <p className="text-gray-500 text-sm">{session?.user.email}</p>
+        </div>
+        <button
+          onClick={openCreate}
+          className="bg-navy-600 hover:bg-navy-950 transition-colors text-white text-sm rounded-lg px-4 py-2 font-medium"
+        >
+          + Nova atividade
+        </button>
       </div>
+
+      {error && <p className="text-red-600 text-sm mb-4">{error}</p>}
+
+      {loading ? (
+        <p className="text-gray-500">Carregando…</p>
+      ) : (
+        <div className="flex gap-4 overflow-x-auto pb-4">
+          {COLUMNS.map((col) => (
+            <StatusColumn
+              key={col.status}
+              title={col.title}
+              status={col.status}
+              activities={activities.filter((a) => a.status === col.status)}
+              onCardClick={openEdit}
+              onStatusChange={changeStatus}
+              onAddClick={openCreate}
+            />
+          ))}
+        </div>
+      )}
+
+      {modalOpen && (
+        <ActivityModal
+          activity={editingActivity}
+          spaces={spaces}
+          onClose={() => setModalOpen(false)}
+          onSaved={() => {
+            setModalOpen(false)
+            refresh()
+          }}
+          onDeleted={() => {
+            setModalOpen(false)
+            refresh()
+          }}
+        />
+      )}
 
       <button
         onClick={() => supabase.auth.signOut()}
-        className="mt-6 text-sm text-navy-600 hover:text-navy-950 underline"
+        className="mt-8 text-sm text-navy-600 hover:text-navy-950 underline"
       >
         Sair
       </button>
