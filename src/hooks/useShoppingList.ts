@@ -3,7 +3,7 @@ import {
   fetchShoppingItems,
   fetchFrequentItems,
   addShoppingItem,
-  toggleShoppingItem,
+  setItemChecked,
   deleteShoppingItem,
   clearCheckedItems,
   type AddItemInput,
@@ -47,10 +47,20 @@ export function useShoppingList() {
   }
 
   async function toggleItem(id: string, checked: boolean) {
+    const item = items.find((i) => i.id === id)
+    if (!item) return
+
     const previous = items
+    // atualização otimista simples; se houver fusão, o refresh() logo depois
+    // corrige a lista com o resultado real do servidor
     setItems((prev) => prev.map((i) => (i.id === id ? { ...i, checked } : i)))
+
     try {
-      await toggleShoppingItem(id, checked)
+      const result = await setItemChecked(items, item, checked)
+      if (result.merged) {
+        toast.info(`"${item.name}" já estava pendente — quantidade atualizada.`)
+      }
+      await refresh()
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Erro ao atualizar item')
       setItems(previous)

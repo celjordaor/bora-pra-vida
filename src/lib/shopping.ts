@@ -23,13 +23,13 @@ export async function fetchFrequentItems(): Promise<FrequentItem[]> {
   return data ?? []
 }
 
-function normalizeName(name: string): string {
+export function normalizeName(name: string): string {
   return name.trim().toLowerCase()
 }
 
 /** Soma quantidades numéricas (ex.: "2" + "3" = "5"). Se não der pra somar
  * (texto livre, tipo "1 pacote grande"), mantém a informação mais completa. */
-function mergeQuantity(oldQty: string | null, newQty: string | null): string | null {
+export function mergeQuantity(oldQty: string | null, newQty: string | null): string | null {
   const oldNum = oldQty ? parseFloat(oldQty.replace(',', '.')) : NaN
   const newNum = newQty ? parseFloat(newQty.replace(',', '.')) : NaN
 
@@ -125,12 +125,59 @@ async function touchFrequentItem(userId: string, name: string, category: string)
   }
 }
 
-export async function toggleShoppingItem(id: string, checked: boolean) {
+export interface SetCheckedResult {
+  merged: boolean
+}
+
+/**
+ * Marca/desmarca um item como concluído.
+ *
+ * Ao DESMARCAR (voltar pra pendente), verifica se já existe outro item
+ * pendente com o mesmo nome — se existir, funde as quantidades nele e
+ * remove este, em vez de criar uma duplicata visual na lista.
+ */
+export async function setItemChecked(
+  existingItems: ShoppingItem[],
+  item: ShoppingItem,
+  checked: boolean
+): Promise<SetCheckedResult> {
+  if (checked) {
+    const { error } = await supabase
+      .from('shopping_items')
+      .update({ checked: true })
+      .eq('id', item.id)
+    if (error) throw error
+    return { merged: false }
+  }
+
+  const normalized = normalizeName(item.name)
+  const duplicate = existingItems.find(
+    (i) => i.id !== item.id && !i.checked && normalizeName(i.name) === normalized
+  )
+
+  if (duplicate) {
+    const mergedQty = mergeQuantity(duplicate.quantity, item.quantity)
+    const { error: updateError } = await supabase
+      .from('shopping_items')
+      .update({ quantity: mergedQty })
+      .eq('id', duplicate.id)
+    if (updateError) throw updateError
+
+    const { error: deleteError } = await supabase
+      .from('shopping_items')
+      .delete()
+      .eq('id', item.id)
+    if (deleteError) throw deleteError
+
+    return { merged: true }
+  }
+
   const { error } = await supabase
     .from('shopping_items')
-    .update({ checked })
-    .eq('id', id)
+    .update({ checked: false })
+    .eq('id', item.id)
   if (error) throw error
+  return { merged: false }
 }
 
 export async function deleteShoppingItem(id: string) {
